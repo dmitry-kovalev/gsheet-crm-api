@@ -23,7 +23,7 @@ type GoogleClient struct {
 }
 
 func Init(log *logrus.Logger) (*GoogleClient, error) {
-	b, err := ioutil.ReadFile("credentials.json")
+	b, err := ioutil.ReadFile("google-credentials.json")
 	if err != nil {
 		log.Fatalf("Unable to read client secret file: %v", err)
 	}
