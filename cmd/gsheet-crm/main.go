@@ -24,14 +24,14 @@ var (
 )
 
 func processQuery(w http.ResponseWriter, r *http.Request) {
-	response := "OK\n"
 	values := r.URL.Query()
 	log.Infof("GET with params %v", values)
+	w.Header().Add("Content-Type", "text/html; charset=UTF-8")
 
 	spreadsheetID := values.Get("spreadsheetID")
 	if spreadsheetID == "" {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprint(w, "Missed spreadsheetID")
+		w.Write([]byte(`Missed spreadsheetID`))
 		return
 	}
 
@@ -42,14 +42,14 @@ func processQuery(w http.ResponseWriter, r *http.Request) {
 	matched, err := regexp.MatchString(`^(.{1,}\!){0,1}([A-Z]+[0-9]+:[A-Z]+)$`, cellsRange)
 	if err != nil || !matched {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprint(w, "Invalid cells range")
+		w.Write([]byte(`Invalid cells range`))
 		return
 	}
 
 	phone := values.Get("phone")
 	if phone == "" {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprint(w, "Missed phone")
+		w.Write([]byte(`Missed phone number`))
 		return
 	}
 
@@ -70,38 +70,41 @@ func processQuery(w http.ResponseWriter, r *http.Request) {
 	if err != nil || phoneMask_ == "" {
 		phoneMask = 10
 	}
-	phone = phone[len(phone)-phoneMask : len(phone)]
+	if phoneMask > len(phone) {
+		phoneMask = len(phone)
+	}
+	phone = phone[len(phone)-phoneMask:]
 
 	data, err := gc.Query(spreadsheetID, cellsRange)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprint(w, "Empty data")
+		w.Write([]byte(`Empty data`))
 		return
 	}
 	for _, row := range data {
 		if len(row) <= phoneCol {
 			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprint(w, "Invalid phone column")
+			w.Write([]byte(`Invalid number of phone column`))
 			return
 		}
 		if len(row) <= nameCol {
 			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprint(w, "Invalid name column")
+			w.Write([]byte(`Invalid number of name column`))
 			return
 		}
 		val := fmt.Sprintf("%v", row[phoneCol])
 		log.Infof("%v", val)
 		if strings.HasSuffix(val, phone) {
-			response = fmt.Sprintf("%v", row[nameCol])
-			log.Infof("Found customer %v with phone %v", response, val)
+			log.Infof("Found customer %v with phone %v", data, val)
 			w.WriteHeader(http.StatusOK)
-			fmt.Fprint(w, response)
+			res := fmt.Sprintf("Hello %v", row[nameCol])
+			w.Write([]byte(res))
 			return
 		}
 	}
 	log.Infof("Didn't find any customer with phone %v", phone)
 	w.WriteHeader(http.StatusNotFound)
-	fmt.Fprint(w, "Not found")
+	w.Write([]byte(`Not found`))
 }
 
 func main() {
