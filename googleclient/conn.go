@@ -49,7 +49,7 @@ func Init(log *logrus.Logger) (*GoogleClient, error) {
 func (g *GoogleClient) Query(spreadsheetId, readRange string) ([][]interface{}, error) {
 	resp, err := g.srv.Spreadsheets.Values.Get(spreadsheetId, readRange).Do()
 	if err != nil {
-		g.log.Fatalf("Unable to retrieve data from sheet: %v", err)
+		g.log.Errorf("Unable to retrieve data from sheet : %v", err)
 		return nil, err
 	}
 
