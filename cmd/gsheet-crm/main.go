@@ -13,7 +13,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/dmitry-kovalev/internal/gsheet-crm-api/googleclient"
+	"github.com/dmitry-kovalev/gsheet-crm-api/internal/googleclient"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 )
