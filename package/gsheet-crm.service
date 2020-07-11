@@ -5,6 +5,7 @@ After=network.target
 [Service]
 SyslogFacility=local0
 LimitNOFILE=20480
+WorkingDirectory=/usr/lib/%N
 EnvironmentFile=-/etc/default/%N
 ExecStart=/usr/sbin/gsheet-crm
 KillMode=process
