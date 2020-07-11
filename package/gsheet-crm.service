@@ -1,0 +1,17 @@
+[Unit]
+Description=Google Sheet CRM
+After=network.target
+
+[Service]
+SyslogFacility=local0
+LimitNOFILE=20480
+EnvironmentFile=-/etc/default/%N
+ExecStart=/usr/sbin/gsheet-crm
+KillMode=process
+Restart=on-failure
+RestartSec=1s
+RestartPreventExitStatus=255
+Type=simple
+
+[Install]
+WantedBy=multi-user.target

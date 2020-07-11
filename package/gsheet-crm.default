@@ -1,0 +1,8 @@
+# Defaults for gsheet-crm service
+# installed at /etc/default/gsheet-crm by the maintainer scripts
+#
+# This is a POSIX shell fragment
+#
+
+# Additional options that are passed to the Daemon.
+PORT=8083

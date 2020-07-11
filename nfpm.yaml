@@ -1,0 +1,35 @@
+# nfpm example config file
+#
+# check https://nfpm.goreleaser.com/configuration for detailed usage
+#
+name: "gsheet-crm"
+arch: "amd64"
+platform: "linux"
+version: "v1.0.0a"
+section: "default"
+priority: "extra"
+replaces:
+provides:
+depends:
+recommends:
+suggests:
+conflicts:
+maintainer: "Dmitry Kovalev <dk@gravitel.ru>"
+description: |
+  FooBar is the great foo and bar software.
+    And this can be in multiple lines!
+vendor: "Gravitel"
+homepage: "https://gravitel.ru"
+license: "MIT"
+files:
+  ./gsheet-crm: "/usr/sbin/gsheet-crm"
+  ./package/gsheet-crm.service: "/etc/systemd/system/gsheet-crm.service"
+config_files:
+  ./package/gsheet-crm.default: "/etc/default/gsheet-crm"
+  ./google-credentials.json: "/usr/lib/gsheet-crm/google-credentials.json"
+  ./token.json: "/usr/lib/gsheet-crm/token.json"
+overrides:
+  rpm:
+    scripts:
+  deb:
+    scripts:
