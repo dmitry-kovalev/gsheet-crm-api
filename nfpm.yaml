@@ -5,7 +5,7 @@
 name: "gsheet-crm"
 arch: "amd64"
 platform: "linux"
-version: "v1.0.0a"
+version: "v1.0.1a"
 section: "default"
 priority: "extra"
 replaces:
@@ -16,8 +16,7 @@ suggests:
 conflicts:
 maintainer: "Dmitry Kovalev <dk@gravitel.ru>"
 description: |
-  FooBar is the great foo and bar software.
-    And this can be in multiple lines!
+  Поиск имени клиента по его телефонному номеру в таблицах Google Sheets
 vendor: "Gravitel"
 homepage: "https://gravitel.ru"
 license: "MIT"
@@ -31,5 +30,9 @@ config_files:
 overrides:
   rpm:
     scripts:
+      postinstall: ./package/scripts/postinstall.sh
+      preremove: ./package/scripts/preremove.sh
   deb:
     scripts:
+      postinstall: ./package/scripts/postinstall.sh
+      preremove: ./package/scripts/preremove.sh
