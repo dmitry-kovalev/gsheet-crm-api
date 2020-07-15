@@ -5,4 +5,4 @@
 #
 
 # Additional options that are passed to the Daemon.
-PORT=8088
+export PORT=8088

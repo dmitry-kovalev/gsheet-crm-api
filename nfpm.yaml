@@ -22,7 +22,8 @@ homepage: "https://gravitel.ru"
 license: "MIT"
 files:
   ./gsheet-crm: "/usr/sbin/gsheet-crm"
-  ./package/gsheet-crm.service: "/etc/systemd/system/gsheet-crm.service"
+  #  ./package/gsheet-crm.service: "/etc/systemd/system/gsheet-crm.service"
+  ./package/gsheet-crm.init: "/etc/init.d/gsheet-crm"
 config_files:
   ./package/gsheet-crm.default: "/etc/default/gsheet-crm"
   ./google-credentials.json: "/usr/lib/gsheet-crm/google-credentials.json"

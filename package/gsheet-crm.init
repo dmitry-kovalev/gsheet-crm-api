@@ -1,0 +1,198 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          gsheet-crm
+# Required-Start:    $local_fs $network $remote_fs $syslog
+# Required-Stop:     $local_fs $network $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Google Sheets CRM Service
+# Description:        Google Sheets CRM Service allow you to search client name in given
+#                     google sheet by his phone number.
+### END INIT INFO
+
+# Author: Dmitry Kovalev <dk@gravitel.ru>
+
+# Do NOT "set -e"
+# PATH should only include /usr/* if it runs after the mountnfs.sh script
+PATH=/sbin:/usr/sbin:/bin:/usr/bin
+DESC="Google Sheets CRM Service"
+NAME=gsheet-crm
+PIDFILE=/var/run/$NAME.pid
+RUNFILE=/var/run/$NAME.run
+DAEMON=/usr/sbin/$NAME
+DAEMONDIR=/usr/lib/$NAME
+SCRIPTNAME=/etc/init.d/$NAME
+
+# Exit if the package is not installed
+[ -x "$DAEMON" ] || exit 0
+
+# Read configuration variable file if it is present
+[ -r /etc/default/$NAME ] && . /etc/default/$NAME
+
+log_daemon_msg() { logger "$@"; }
+log_end_msg() { [ $1 -eq 0 ] && RES=OK; logger ${RES:=FAIL}; }
+
+#
+# Function that starts the daemon/service
+#
+do_start()
+{
+	# Return
+	#   0 if daemon has been started
+	#   1 if daemon was already running
+	#   2 if daemon could not be started
+	PID=`cat $PIDFILE 2> /dev/null`
+	if [ ! -z "$PID" ] && kill -0 $PID > /dev/null 2>&1; then
+			return 1
+	fi
+
+	cd $DAEMONDIR
+(
+	touch $RUNFILE
+	while :; do
+		exec 9>>$PIDFILE
+		flock -w 8 9 || exit 1
+		PID=`cat $PIDFILE 2> /dev/null`
+		if [ -n $PID ] && kill -0 $PID > /dev/null 2>&1; then
+			exit 1
+		fi
+		setsid $DAEMON < /dev/null > stdout.log 2> stderr.log &
+		PID=$!
+		echo $PID > $PIDFILE
+		flock -u 9 || exit 1
+		exec 9>&-
+		wait $PID
+		rc=$?
+		if [ $rc -ne 0 ]; then
+			t=$(mktemp --tmpdir=. log-XXXX)
+			mv stdout.log $t
+			mv stderr.log $t-err
+			echo $rc > $t-rc
+		fi
+		if [ ! -e $RUNFILE ]; then
+			break
+		fi
+		sleep 1
+	done
+	rm $PIDFILE
+) < /dev/null > runner.log 2>&1 &
+
+	STARTED=0
+	for i in $(seq 5); do
+			sleep 1
+			if kill -0 `cat $PIDFILE 2> /dev/null` > /dev/null 2>&1; then
+					STARTED=1
+					break
+			fi
+	done
+	if [ $STARTED -ne 1 ]; then
+			return 2
+	fi
+	return 0
+}
+
+#
+# Function that stops the daemon/service
+#
+do_stop()
+{
+	# Return
+	#   0 if daemon has been stopped
+	#   1 if daemon was already stopped
+	#   2 if daemon could not be stopped
+	#   other if a failure occurred
+	rm -f $RUNFILE
+	PID=`cat $PIDFILE 2> /dev/null`
+	if [ -z "$PID" ] || ! kill -0 $PID 2> /dev/null; then
+			rm -f $PIDFILE
+			return 1
+	fi
+	kill $PID
+	STOPPED=0
+	for i in $(seq 605); do
+		sleep 1
+		if ! kill -0 $PID 2> /dev/null; then
+			STOPPED=1
+			break
+		fi
+	done
+	if [ $STOPPED -ne 1 ]; then
+		kill -9 $PID
+	fi
+	rm -f $PIDFILE
+	return 0
+}
+
+
+#
+# Function that sends a SIGHUP to the daemon/service
+#
+do_reload() {
+	#
+	# If the daemon can reload its configuration without
+	# restarting (for example, when it is sent a SIGHUP),
+	# then implement that here.
+	#
+	start-stop-daemon --stop --signal 1 --quiet --pidfile $PIDFILE --name $NAME
+	return 0
+}
+
+case "$1" in
+  start)
+    echo -n "Starting $DESC: "
+	[ "$VERBOSE" != no ] && log_daemon_msg "Starting $DESC" "$NAME"
+	do_start
+	case "$?" in
+		0|1) [ "$VERBOSE" != no ] && log_end_msg 0 ;;
+		2) [ "$VERBOSE" != no ] && log_end_msg 1 ;;
+	esac
+	;;
+  stop)
+	[ "$VERBOSE" != no ] && log_daemon_msg "Stopping $DESC" "$NAME"
+	do_stop
+	case "$?" in
+		0|1) [ "$VERBOSE" != no ] && log_end_msg 0 ;;
+		2) [ "$VERBOSE" != no ] && log_end_msg 1 ;;
+	esac
+	;;
+  status)
+	status_of_proc "$DAEMON" "$NAME" && exit 0 || exit $?
+	;;
+  #reload|force-reload)
+	#
+	# If do_reload() is not implemented then leave this commented out
+	# and leave 'force-reload' as an alias for 'restart'.
+	#
+	#log_daemon_msg "Reloading $DESC" "$NAME"
+	#do_reload
+	#log_end_msg $?
+	#;;
+  restart|force-reload)
+	#
+	# If the "reload" option is implemented then remove the
+	# 'force-reload' alias
+	#
+	log_daemon_msg "Restarting $DESC" "$NAME"
+	do_stop
+	case "$?" in
+	  0|1)
+		do_start
+		case "$?" in
+			0) log_end_msg 0 ;;
+			1) log_end_msg 1 ;; # Old process is still running
+			*) log_end_msg 1 ;; # Failed to start
+		esac
+		;;
+	  *)
+		# Failed to stop
+		log_end_msg 1
+		;;
+	esac
+	;;
+  *)
+	echo "Usage: $SCRIPTNAME {start|stop|status|restart|force-reload}" >&2
+	exit 3
+	;;
+esac
+
+:
